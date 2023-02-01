@@ -1,0 +1,6 @@
+{
+  "require": {
+    "symfony/translation": "^v4.4",
+    "symfony/translation-contracts": "v1.1.13"
+  }
+}
