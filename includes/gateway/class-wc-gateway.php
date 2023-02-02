@@ -92,7 +92,7 @@ class WC_Gateway_PayerMax extends WC_Payment_Gateway {
         add_action('admin_enqueue_scripts', [$this, 'add_media_script']);
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, [$this, 'process_admin_options']);
         add_action('woocommerce_thankyou_' . $this->id, [$this, 'thankyou_page']);
-        add_action('woocommerce_admin_order_data_after_order_details', [$this, 'check_order_details']);
+        // add_action('woocommerce_admin_order_data_after_order_details', [$this, 'check_order_details']);
         add_action('woocommerce_api_' . $this->id, [$this, 'check_order_notify']);
         add_action('admin_notices', [$this, 'check_payermax_settings']);
     }
@@ -190,36 +190,5 @@ class WC_Gateway_PayerMax extends WC_Payment_Gateway {
             'code' => 'SUCCESS',
             'msg'  => 'Success',
         ]));
-    }
-
-    /**
-     * Check order status
-     */
-    public function check_order_details($order) {
-        if ($order->get_status() == 'on-hold') {
-            include_once WC_PAYERMAX_DIR . '/includes/admin/order-details.php';
-        }
-    }
-
-    /**
-     * Check order status
-     * Ajax receipt
-     */
-    public function check_payment_status() {
-        $order_id = $_POST['order_id'];
-        $order    = new WC_Order($order_id);
-        if (!$order) {
-            return wp_die('Order Not Found.');
-        }
-
-        $payment_methods = WC()->payment_gateways()->payment_gateways();
-        $_this           = $payment_methods[strtolower(self::class)];
-
-        $api      = new Api($_this);
-        $response = $api->queryOrder($order);
-        WC_PayerMax_Helper::mark_order_status($order, $response);
-
-        echo json_encode($response);
-        wp_die();
     }
 }

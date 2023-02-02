@@ -4,7 +4,7 @@
  * Description: A simpler and safer payment suite.
  * Author: PayerMax
  * Author URI: https://www.payermax.com/
- * Version: 2.0.3
+ * Version: 2.0.4
  * Requires at least: 4.0
  * Requires PHP: 5.4
  * WC requires at least: 3.0
@@ -94,9 +94,16 @@ function woocommerce_gateway_payermax() {
                     }
                 );
 
+                // add order action
                 add_action(
-                    'wp_ajax_check_payment_status',
-                    ['WC_Gateway_PayerMax', 'check_payment_status']
+                    'woocommerce_order_actions',
+                    [$this, 'add_woocommerce_order_actions']
+                );
+
+                // check order status
+                add_action(
+                    'woocommerce_order_action_check_order_status',
+                    [$this, 'check_order_status']
                 );
             }
 
@@ -107,6 +114,30 @@ function woocommerce_gateway_payermax() {
              */
             public static function trans($id, array $parameters = [], $domain = null, $locale = null) {
                 return self::$i18n->trans($id, $parameters, $domain, $locale);
+            }
+
+            /**
+             * Order actions
+             * Add an order status detection function
+             *
+             * @return woocommerce actions
+             */
+            public function add_woocommerce_order_actions($actions) {
+                $actions['check_order_status'] = self::trans('check_status');
+                return $actions;
+            }
+
+            /**
+             * Check order status
+             */
+            public function check_order_status($order) {
+                if ($order->get_status() == 'on-hold') {
+                    $payment_methods = WC()->payment_gateways()->payment_gateways();
+                    $_this           = $payment_methods[$order->payment_method];
+                    $api             = new Api($_this);
+                    $response        = $api->queryOrder($order);
+                    WC_PayerMax_Helper::mark_order_status($order, $response);
+                }
             }
 
         }
